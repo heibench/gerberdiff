@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Documentation site** at <https://cameronbrooks11.github.io/gerberdiff/>
+- **Documentation site** at <https://heibench.github.io/gerberdiff/>
   -- MkDocs + Material with mkdocstrings API reference, MathJax for the
   LaTeX notation already used in the docs, and Changelog/Contributing
   included via snippets. Built strictly and deployed to GitHub Pages by
@@ -671,34 +671,34 @@ merge_tolerance) -> SingleLayerDiff`.
 - mypy `strict=true`, `warn_unused_ignores=true`, `cairocffi.*` override for missing stubs.
 - 2 smoke tests in `tests/test_scaffold.py`.
 
-[Unreleased]: https://github.com/CameronBrooks11/gerberdiff/compare/v0.29.1...HEAD
-[0.29.1]: https://github.com/CameronBrooks11/gerberdiff/compare/v0.29.0...v0.29.1
-[0.29.0]: https://github.com/CameronBrooks11/gerberdiff/compare/9ffd4c8f...v0.29.0
-[0.28.0]: https://github.com/CameronBrooks11/gerberdiff/compare/b6b6b98d...9ffd4c8f
-[0.27.0]: https://github.com/CameronBrooks11/gerberdiff/compare/963eb957...b6b6b98d
-[0.26.0]: https://github.com/CameronBrooks11/gerberdiff/compare/6162e435...963eb957
-[0.25.0]: https://github.com/CameronBrooks11/gerberdiff/compare/e2519ec8...6162e435
-[0.24.0]: https://github.com/CameronBrooks11/gerberdiff/compare/91c154d4...e2519ec8
-[0.23.0]: https://github.com/CameronBrooks11/gerberdiff/compare/458734f9...91c154d4
-[0.22.0]: https://github.com/CameronBrooks11/gerberdiff/compare/1c96a7b8...458734f9
-[0.21.0]: https://github.com/CameronBrooks11/gerberdiff/compare/4d1201fe...1c96a7b8
-[0.20.0]: https://github.com/CameronBrooks11/gerberdiff/compare/ba9a5015...4d1201fe
-[0.19.0]: https://github.com/CameronBrooks11/gerberdiff/compare/c502171a...ba9a5015
-[0.18.0]: https://github.com/CameronBrooks11/gerberdiff/compare/10f8f392...c502171a
-[0.17.0]: https://github.com/CameronBrooks11/gerberdiff/compare/b04813ea...10f8f392
-[0.16.0]: https://github.com/CameronBrooks11/gerberdiff/compare/3044033b...b04813ea
-[0.15.0]: https://github.com/CameronBrooks11/gerberdiff/compare/9b4e3401...3044033b
-[0.14.0]: https://github.com/CameronBrooks11/gerberdiff/compare/1a399ea2...9b4e3401
-[0.13.0]: https://github.com/CameronBrooks11/gerberdiff/compare/c0672ea8...1a399ea2
-[0.12.0]: https://github.com/CameronBrooks11/gerberdiff/compare/1bbfb235...c0672ea8
-[0.11.0]: https://github.com/CameronBrooks11/gerberdiff/compare/2d1573ad...1bbfb235
-[0.10.0]: https://github.com/CameronBrooks11/gerberdiff/compare/6691b195...2d1573ad
-[0.9.0]: https://github.com/CameronBrooks11/gerberdiff/compare/2e944edc...6691b195
-[0.8.0]: https://github.com/CameronBrooks11/gerberdiff/compare/46b463de...2e944edc
-[0.7.0]: https://github.com/CameronBrooks11/gerberdiff/compare/5b9212fa...46b463de
-[0.6.0]: https://github.com/CameronBrooks11/gerberdiff/compare/e12ff13f...5b9212fa
-[0.5.0]: https://github.com/CameronBrooks11/gerberdiff/compare/6330d0cb...e12ff13f
-[0.4.0]: https://github.com/CameronBrooks11/gerberdiff/compare/f63a51a3...6330d0cb
-[0.3.0]: https://github.com/CameronBrooks11/gerberdiff/compare/3f1d1909...f63a51a3
-[0.2.0]: https://github.com/CameronBrooks11/gerberdiff/compare/674251dd...3f1d1909
-[0.1.0]: https://github.com/CameronBrooks11/gerberdiff/compare/2eeb692...674251dd
+[Unreleased]: https://github.com/heibench/gerberdiff/compare/v0.29.1...HEAD
+[0.29.1]: https://github.com/heibench/gerberdiff/compare/v0.29.0...v0.29.1
+[0.29.0]: https://github.com/heibench/gerberdiff/compare/9ffd4c8f...v0.29.0
+[0.28.0]: https://github.com/heibench/gerberdiff/compare/b6b6b98d...9ffd4c8f
+[0.27.0]: https://github.com/heibench/gerberdiff/compare/963eb957...b6b6b98d
+[0.26.0]: https://github.com/heibench/gerberdiff/compare/6162e435...963eb957
+[0.25.0]: https://github.com/heibench/gerberdiff/compare/e2519ec8...6162e435
+[0.24.0]: https://github.com/heibench/gerberdiff/compare/91c154d4...e2519ec8
+[0.23.0]: https://github.com/heibench/gerberdiff/compare/458734f9...91c154d4
+[0.22.0]: https://github.com/heibench/gerberdiff/compare/1c96a7b8...458734f9
+[0.21.0]: https://github.com/heibench/gerberdiff/compare/4d1201fe...1c96a7b8
+[0.20.0]: https://github.com/heibench/gerberdiff/compare/ba9a5015...4d1201fe
+[0.19.0]: https://github.com/heibench/gerberdiff/compare/c502171a...ba9a5015
+[0.18.0]: https://github.com/heibench/gerberdiff/compare/10f8f392...c502171a
+[0.17.0]: https://github.com/heibench/gerberdiff/compare/b04813ea...10f8f392
+[0.16.0]: https://github.com/heibench/gerberdiff/compare/3044033b...b04813ea
+[0.15.0]: https://github.com/heibench/gerberdiff/compare/9b4e3401...3044033b
+[0.14.0]: https://github.com/heibench/gerberdiff/compare/1a399ea2...9b4e3401
+[0.13.0]: https://github.com/heibench/gerberdiff/compare/c0672ea8...1a399ea2
+[0.12.0]: https://github.com/heibench/gerberdiff/compare/1bbfb235...c0672ea8
+[0.11.0]: https://github.com/heibench/gerberdiff/compare/2d1573ad...1bbfb235
+[0.10.0]: https://github.com/heibench/gerberdiff/compare/6691b195...2d1573ad
+[0.9.0]: https://github.com/heibench/gerberdiff/compare/2e944edc...6691b195
+[0.8.0]: https://github.com/heibench/gerberdiff/compare/46b463de...2e944edc
+[0.7.0]: https://github.com/heibench/gerberdiff/compare/5b9212fa...46b463de
+[0.6.0]: https://github.com/heibench/gerberdiff/compare/e12ff13f...5b9212fa
+[0.5.0]: https://github.com/heibench/gerberdiff/compare/6330d0cb...e12ff13f
+[0.4.0]: https://github.com/heibench/gerberdiff/compare/f63a51a3...6330d0cb
+[0.3.0]: https://github.com/heibench/gerberdiff/compare/3f1d1909...f63a51a3
+[0.2.0]: https://github.com/heibench/gerberdiff/compare/674251dd...3f1d1909
+[0.1.0]: https://github.com/heibench/gerberdiff/compare/2eeb692...674251dd

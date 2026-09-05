@@ -1,7 +1,7 @@
 # gerberdiff
 
-[![CI](https://github.com/CameronBrooks11/gerberdiff/actions/workflows/ci.yml/badge.svg)](https://github.com/CameronBrooks11/gerberdiff/actions/workflows/ci.yml)
-[![Docs](https://github.com/CameronBrooks11/gerberdiff/actions/workflows/docs.yml/badge.svg)](https://cameronbrooks11.github.io/gerberdiff/)
+[![CI](https://github.com/heibench/gerberdiff/actions/workflows/ci.yml/badge.svg)](https://github.com/heibench/gerberdiff/actions/workflows/ci.yml)
+[![Docs](https://github.com/heibench/gerberdiff/actions/workflows/docs.yml/badge.svg)](https://heibench.github.io/gerberdiff/)
 [![PyPI](https://img.shields.io/pypi/v/gerberdiff)](https://pypi.org/project/gerberdiff/)
 [![Python](https://img.shields.io/pypi/pyversions/gerberdiff)](https://pypi.org/project/gerberdiff/)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
@@ -50,7 +50,7 @@ for layer in result.layers:
 
 ## Docs
 
-Full documentation site: **<https://cameronbrooks11.github.io/gerberdiff/>**
+Full documentation site: **<https://heibench.github.io/gerberdiff/>**
 
 | Topic                | File                                         |
 | -------------------- | -------------------------------------------- |
