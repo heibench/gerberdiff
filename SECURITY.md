@@ -14,7 +14,7 @@ Only the latest released minor version is supported.
 **Do not open a public issue for security vulnerabilities.**
 
 Please report them via
-[GitHub private security advisories](https://github.com/CameronBrooks11/gerberdiff/security/advisories/new).
+[GitHub private security advisories](https://github.com/heibench/gerberdiff/security/advisories/new).
 
 Include:
 
