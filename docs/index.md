@@ -75,4 +75,4 @@ for layer in result.layers:
 
 ## License
 
-[Apache-2.0](https://github.com/CameronBrooks11/gerberdiff/blob/main/LICENSE).
+[Apache-2.0](https://github.com/heibench/gerberdiff/blob/main/LICENSE).

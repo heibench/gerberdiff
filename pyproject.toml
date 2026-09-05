@@ -33,10 +33,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/CameronBrooks11/gerberdiff"
-Repository = "https://github.com/CameronBrooks11/gerberdiff"
-Changelog = "https://github.com/CameronBrooks11/gerberdiff/blob/main/CHANGELOG.md"
-Issues = "https://github.com/CameronBrooks11/gerberdiff/issues"
+Homepage = "https://github.com/heibench/gerberdiff"
+Repository = "https://github.com/heibench/gerberdiff"
+Changelog = "https://github.com/heibench/gerberdiff/blob/main/CHANGELOG.md"
+Issues = "https://github.com/heibench/gerberdiff/issues"
 
 [project.optional-dependencies]
 # Installed by end users who want prettier terminal output

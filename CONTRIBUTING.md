@@ -7,7 +7,7 @@ Thank you for your interest in contributing to **gerberdiff**!
 Requires Python >= 3.11 and [uv](https://docs.astral.sh/uv/).
 
 ```sh
-git clone https://github.com/CameronBrooks11/gerberdiff.git
+git clone https://github.com/heibench/gerberdiff.git
 cd gerberdiff
 uv sync --dev
 ```
@@ -109,5 +109,5 @@ EOF
 ## License
 
 By contributing you agree that your contributions will be licensed under the
-[Apache-2.0](https://github.com/CameronBrooks11/gerberdiff/blob/main/LICENSE)
+[Apache-2.0](https://github.com/heibench/gerberdiff/blob/main/LICENSE)
 licence.
