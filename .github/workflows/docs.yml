@@ -10,6 +10,13 @@ on:
       - "CHANGELOG.md"
       - "CONTRIBUTING.md"
       - ".github/workflows/docs.yml"
+      # The site is built with `uv sync --group docs`, so what ships is decided
+      # by the lock, not just by the sources above. Without these two paths a
+      # dependency fix lands on main and the deployed site keeps serving the old
+      # build -- which is how mkdocs-material 9.7.6 stayed live on the published
+      # docs after GHSA-xvg9-69gf-fjrf was already patched in the lock.
+      - "uv.lock"
+      - "pyproject.toml"
   pull_request:
     branches: [main]
     paths:
@@ -19,6 +26,11 @@ on:
       - "CHANGELOG.md"
       - "CONTRIBUTING.md"
       - ".github/workflows/docs.yml"
+      - "uv.lock"
+      - "pyproject.toml"
+  # Lets the site be rebuilt without inventing a commit -- there was previously
+  # no way to redeploy at all.
+  workflow_dispatch:
 
 permissions:
   contents: read
