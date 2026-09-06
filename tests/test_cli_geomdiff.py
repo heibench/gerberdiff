@@ -105,7 +105,7 @@ def test_geomdiff_json_report(tmp_path: Path) -> None:
     result = _run("geomdiff", str(tmp_path / "b"), str(tmp_path / "a"), "--out-json", str(out))
     assert result.exit_code == 0
     data = json.loads(out.read_text())
-    assert data["version"] == 2
+    assert data["version"] == 3
     assert data["mode"] == "geometry"
     assert data["summary"]["total_changes"] == 1
     assert data["tolerances"]["move_tol_mm"] == 0.005
@@ -118,7 +118,7 @@ def test_geomdiff_json_no_overwrite(tmp_path: Path) -> None:
     out = tmp_path / "report.json"
     out.write_text("{}")
     result = _run("geomdiff", str(tmp_path / "b"), str(tmp_path / "a"), "--out-json", str(out))
-    assert result.exit_code == 1
+    assert result.exit_code == 64, "an existing output file is a usage error (EX_USAGE)"
     assert "already exists" in result.output
 
 
@@ -169,7 +169,7 @@ def test_geomdiff_layer_filter(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_geomdiff_parse_error_exit_2(tmp_path: Path) -> None:
+def test_geomdiff_parse_error_exit_4(tmp_path: Path) -> None:
     before, after = tmp_path / "b", tmp_path / "a"
     before.mkdir()
     after.mkdir()
@@ -178,7 +178,7 @@ def test_geomdiff_parse_error_exit_2(tmp_path: Path) -> None:
     (before / "board-F.Cu.gbr").write_text(bad)
     (after / "board-F.Cu.gbr").write_text(bad)
     result = _run("geomdiff", str(before), str(after))
-    assert result.exit_code == 2
+    assert result.exit_code == 4, "a file that cannot be parsed is an error, not a verdict"
     assert "error" in result.output.lower()
 
 
@@ -204,6 +204,8 @@ def test_geomdiff_undefined_aperture_fails_the_gate(tmp_path: Path) -> None:
     _write_board(tmp_path / "b", 0)
     _write_board_with_undefined_aperture(tmp_path / "a")
     result = _run("geomdiff", str(tmp_path / "b"), str(tmp_path / "a"), "--fail-on-diff")
-    assert result.exit_code == 2, result.output
+    # 4, not 2: the file could not be parsed at all. Exit 2 is now reserved for a
+    # comparison that ran but could not be completed (A3).
+    assert result.exit_code == 4, result.output
     assert "undefined aperture D11" in result.output
     assert "0 changes" not in result.output

@@ -133,6 +133,7 @@ def compute_geometry_diff(
                     status=pair.status,
                     added_area_mm2=total_mm2 if pair.status == LayerStatus.Added else 0.0,
                     removed_area_mm2=total_mm2 if pair.status == LayerStatus.Removed else 0.0,
+                    unrepresented=dict(geometry.unrepresented),
                 )
             )
             continue
@@ -195,6 +196,12 @@ def _diff_layer_pair(
     # raster engine's region ordering.
     changes.sort(key=lambda c: (-c.centroid_y, c.centroid_x))
 
+    # Merged across both revisions: an operation the engine could not model on either
+    # side leaves the comparison unable to say the pair is identical.
+    unrepresented = dict(geom_a.unrepresented)
+    for reason, n in geom_b.unrepresented.items():
+        unrepresented[reason] = unrepresented.get(reason, 0) + n
+
     return LayerGeometryDiff(
         name=name,
         layer_type=layer_type,
@@ -203,6 +210,7 @@ def _diff_layer_pair(
         unchanged_count=unchanged_count,
         added_area_mm2=added_geom.area * MM2_PER_IN2,
         removed_area_mm2=removed_geom.area * MM2_PER_IN2,
+        unrepresented=unrepresented,
     )
 
 

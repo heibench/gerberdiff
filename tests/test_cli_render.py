@@ -55,7 +55,7 @@ def test_render_no_overwrite_by_default(tmp_path: Path) -> None:
     out = tmp_path / "fcu.png"
     out.write_bytes(b"existing")
     result = _run("render", str(_FCU), "--out-png", str(out), "--width", "64", "--height", "64")
-    assert result.exit_code == 1
+    assert result.exit_code == 64, "an existing output file is a usage error (EX_USAGE)"
     # Original file untouched
     assert out.read_bytes() == b"existing"
 

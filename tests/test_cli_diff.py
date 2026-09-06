@@ -158,7 +158,7 @@ def test_diff_json_no_overwrite(tmp_path: Path) -> None:
         "--out-json",
         str(out_json),
     )
-    assert result.exit_code == 1
+    assert result.exit_code == 64, "an existing output file is a usage error (EX_USAGE)"
     assert out_json.read_text() == "{}"
 
 
@@ -279,5 +279,7 @@ def test_diff_undefined_aperture_fails_the_gate(tmp_path: Path) -> None:
         header + "%ADD10C,0.1*%\nD10*\nX0Y0D03*\nD11*\nX500000Y500000D03*\n" + "M02*\n"
     )
     result = _run("diff", str(before), str(after), "--fail-on-diff")
-    assert result.exit_code == 2, result.output
+    # 4, not 2: the file could not be parsed at all. Exit 2 is now reserved for a
+    # comparison that ran but could not be completed (A3).
+    assert result.exit_code == 4, result.output
     assert "undefined aperture D11" in result.output

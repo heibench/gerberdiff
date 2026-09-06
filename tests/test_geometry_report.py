@@ -79,7 +79,7 @@ def _sample_result() -> GeometryDiffResult:
 
 def test_report_version_and_mode() -> None:
     report = build_geometry_report(_sample_result())
-    assert report["version"] == 2
+    assert report["version"] == 3
     assert report["mode"] == "geometry"
     assert report["generator"] == "gerberdiff"
 
@@ -90,6 +90,10 @@ def test_report_summary() -> None:
         "changed_layers": 1,
         "total_changes": 4,
         "has_changes": True,
+        # A differ needs a third state too: has_changes was False both for two
+        # identical boards and for one whose geometry could not be modelled (A3).
+        "outcome": "different",
+        "unrepresented": {},
     }
 
 
@@ -130,7 +134,7 @@ def test_write_report_and_overwrite_guard(tmp_path: Path) -> None:
     out = tmp_path / "report.json"
     write_geometry_report(_sample_result(), out)
     data = json.loads(out.read_text())
-    assert data["version"] == 2
+    assert data["version"] == 3
     with pytest.raises(FileExistsError):
         write_geometry_report(_sample_result(), out)
     write_geometry_report(_sample_result(), out, overwrite=True)

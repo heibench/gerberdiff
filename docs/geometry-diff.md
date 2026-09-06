@@ -158,8 +158,14 @@ documented so the two engines' outputs are interpreted correctly:
 
 ## Known limitations
 
-- Strokes drawn with macro or block apertures are skipped (the raster
+- Strokes drawn with macro or block apertures are not modelled (the raster
   engine draws them as hairlines; neither engine models them properly).
+  **They are reported, not skipped in silence.** Each one is counted in
+  `summary.unrepresented`, makes the layer `indeterminate`, and gives the
+  comparison an `outcome` of `"indeterminate"` at exit `2`. This limitation was
+  documented here long before the output admitted to it: a board with such a
+  stroke reported `0 changes` at exit `0`, with JSON byte-identical to comparing
+  a board against a copy of itself, while the raster engine reported the change.
 - `rerouted` classification is deferred: a redrawn trace reports as
   removed + added segments (or `resized` when endpoints stay close).
 - Geometry changes are op-granular: a moved multi-op footprint reports

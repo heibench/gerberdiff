@@ -1,5 +1,22 @@
 # CLI reference
 
+
+## Exit codes
+
+Shared across the org's tools, so a script can branch on them the same way for
+`gerberdiff`, `partspec` and `netspec`.
+
+| code | meaning |
+| ---- | -------- |
+| `0`  | no differences, and everything was modelled |
+| `1`  | differences found (with `--fail-on-diff`) |
+| `2`  | part of the comparison could not be made -- **not** a statement about the boards |
+| `4`  | an input could not be read or parsed -- also not a statement about the boards |
+| `64` | usage (`EX_USAGE`): bad arguments, or an output file that exists without `--overwrite` |
+
+`2` does not wait for `--fail-on-diff`. That flag chooses whether a *difference* is a
+failure; it has no bearing on whether the tool could look.
+
 ## `parse` -- inspect a single file
 
 ```sh

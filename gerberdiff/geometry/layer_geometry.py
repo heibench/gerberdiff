@@ -134,6 +134,27 @@ class ExpandedOp:
         return self._centroid
 
 
+# Why a draw operation reached the engine but produced no geometry. Each is a
+# real skip below, not a hypothetical: the engine cannot model the operation, so a
+# comparison that depends on it cannot be made. Reported rather than dropped --
+# geomdiff used to answer "0 changes" on a board carrying one of these, with the
+# JSON byte-identical to comparing a board against itself.
+UNREPRESENTED_REASONS = {
+    "stroke_with_macro_aperture": (
+        "a stroke drawn with a macro aperture; the geometry engine does not model it "
+        "(the raster engine draws a hairline)"
+    ),
+    "stroke_with_block_aperture": (
+        "a stroke drawn with a block aperture; the geometry engine does not model it"
+    ),
+    "aperture_without_extents": "an aperture whose extents the engine cannot compute",
+    "macro_flash_is_empty": "a macro flash that evaluated to empty geometry",
+    "block_nesting_too_deep": (
+        f"block-aperture nesting deeper than {_MAX_BLOCK_DEPTH}, which is not replayed"
+    ),
+}
+
+
 @dataclass
 class LayerGeometry:
     """All expanded operations of one parsed file, in replay order."""
@@ -141,6 +162,16 @@ class LayerGeometry:
     ops: list[ExpandedOp] = field(default_factory=list)
     has_clear: bool = False
     diagnostics: list[Diagnostic] = field(default_factory=list)
+    unrepresented: dict[str, int] = field(default_factory=dict)
+    """Reason from :data:`UNREPRESENTED_REASONS` -> how many operations it swallowed.
+
+    Non-empty means this layer's geometry is incomplete, so any comparison against it
+    can report *different* or *could not tell*, but never *identical*.
+    """
+
+    def cannot_represent(self, reason: str) -> None:
+        assert reason in UNREPRESENTED_REASONS, reason
+        self.unrepresented[reason] = self.unrepresented.get(reason, 0) + 1
 
 
 # ---------------------------------------------------------------------------
@@ -205,7 +236,11 @@ def _walk(
     result: LayerGeometry,
 ) -> None:
     if depth >= _MAX_BLOCK_DEPTH:
-        return  # matches renderer: silently skip over-deep nesting
+        # Matches the renderer's limit. Recorded rather than skipped in silence: the
+        # content below this depth is absent from the geometry, so a diff against it
+        # cannot claim the layers are identical.
+        result.cannot_represent("block_nesting_too_deep")
+        return
 
     # Per-layer transform/tile cache.
     layer_cache: dict[int, tuple[_Matrix, list[_Offset], bool]] = {}
@@ -278,6 +313,9 @@ def _emit_flash(
     polarity: Polarity,
 ) -> None:
     if ap is None:
+        # Unreachable since the parser errors on an undefined aperture, but a flash
+        # with no aperture is exactly the shape that produced issue #17.
+        result.cannot_represent("aperture_without_extents")
         return
 
     if isinstance(ap, MacroAperture):
@@ -285,12 +323,14 @@ def _emit_flash(
         geom, diags = flash_geometry(op, ap)
         result.diagnostics.extend(diags)
         if geom.is_empty:
+            result.cannot_represent("macro_flash_is_empty")
             return
         thunk = _const_thunk(geom)
         op_bounds: _Bounds = geom.bounds
     else:
         extents = _aperture_half_extents(ap)
         if extents is None:
+            result.cannot_represent("aperture_without_extents")
             return
         hx, hy = extents
         x, y = op.stop_x, op.stop_y
@@ -328,11 +368,18 @@ def _emit_stroke(
     polarity: Polarity,
 ) -> None:
     if ap is None or isinstance(ap, (BlockAperture, MacroAperture)):
-        # Strokes with macro/block apertures are not meaningful; the raster
-        # engine draws them with a hairline -- skip in the geometry engine.
+        # The geometry engine does not model these; the raster engine draws a hairline.
+        # Recorded, because "not modelled" is not "not there": a trace stroked with a
+        # macro aperture used to vanish here and geomdiff reported 0 changes at exit 0.
+        result.cannot_represent(
+            "stroke_with_block_aperture"
+            if isinstance(ap, BlockAperture)
+            else "stroke_with_macro_aperture"
+        )
         return
     extents = _aperture_half_extents(ap)
     if extents is None:
+        result.cannot_represent("aperture_without_extents")
         return
     hx, hy = extents
     brush = max(hx, hy)  # conservative half-extent in any direction
