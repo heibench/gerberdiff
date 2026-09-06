@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Draw operations using an undefined aperture are no longer dropped in
+  silence** ([#17]) -- selecting a D-code that was never defined (or drawing
+  before any `Dnn` selection at all) left the flash or stroke carrying an
+  aperture index with no definition behind it.  Every consumer treated that
+  as nothing to draw: both geometry emit helpers returned early and the
+  raster renderer drew nothing, with no diagnostic at any severity.  `diff`
+  and `geomdiff` then reported `0 changes` at exit `0`, and the JSON report
+  was byte-identical to a comparison of two genuinely identical boards -- so
+  a real fabrication change could pass a `--fail-on-diff` gate invisibly.
+  The parser now emits an `Error` diagnostic at the offending draw
+  operation, which the existing promotion path turns into exit `2` for
+  `parse`, `render`, `diff` and `geomdiff` alike.  D02 moves and G36/G37
+  region contours consume no aperture and are unaffected.
+
 - **Degenerate region contours no longer leak line geometry** -- a G36/G37
   contour whose points are collinear produced a zero-area `MultiLineString`
   from `make_valid` that flowed into the geometry engine; region expansion
@@ -671,6 +685,7 @@ merge_tolerance) -> SingleLayerDiff`.
 - mypy `strict=true`, `warn_unused_ignores=true`, `cairocffi.*` override for missing stubs.
 - 2 smoke tests in `tests/test_scaffold.py`.
 
+[#17]: https://github.com/heibench/gerberdiff/issues/17
 [Unreleased]: https://github.com/heibench/gerberdiff/compare/v0.29.1...HEAD
 [0.29.1]: https://github.com/heibench/gerberdiff/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/heibench/gerberdiff/compare/9ffd4c8f...v0.29.0

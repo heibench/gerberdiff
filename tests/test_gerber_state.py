@@ -12,8 +12,10 @@ _FIXTURES = Path(__file__).parent / "fixtures" / "gerbers-before"
 
 
 def test_parse_minimal() -> None:
-    # FSLAX25Y25, MOMM unit, circle D10, linear draw, end
-    content = "%FSLAX25Y25*%%MOMM*%%ADD10C,1.0*%G01*X100000Y100000D01*M02*"
+    # FSLAX25Y25, MOMM unit, circle D10, select it, linear draw, end.
+    # The D10* selection is load-bearing: without it the stroke carries
+    # aperture 0, which is undefined, and expands to no geometry at all.
+    content = "%FSLAX25Y25*%%MOMM*%%ADD10C,1.0*%D10*G01*X100000Y100000D01*M02*"
     img = parse_gerber(content)
     assert img.bounding_box.is_valid
     assert len(img.draw_ops) > 0
@@ -416,3 +418,67 @@ def test_sr_parse_records_step_and_repeat_on_layer() -> None:
     assert sr.y == 2
     assert abs(sr.dist_x - 1.0) < 1e-9
     assert abs(sr.dist_y - 0.5) < 1e-9
+
+
+# ---------------------------------------------------------------------------
+# Undefined apertures (issue #17)
+#
+# A draw op whose aperture was never defined is dropped by every downstream
+# consumer -- both geometry emit helpers and the raster renderer treat a
+# missing aperture as "nothing to draw".  Before the parser reported it, a
+# real fabrication change could pass a --fail-on-diff gate at exit 0.
+# ---------------------------------------------------------------------------
+
+_HDR = "%FSLAX26Y26*%\n%MOIN*%\n"
+
+
+def _errors(gerber: str) -> list[str]:
+    img = parse_gerber(gerber)
+    return [d.message for d in img.diagnostics if d.severity == DiagnosticSeverity.Error]
+
+
+def test_flash_with_undefined_aperture_is_an_error() -> None:
+    errs = _errors(_HDR + "D11*\nX1000Y1000D03*\nM02*\n")
+    assert errs == ["Draw operation uses undefined aperture D11"]
+
+
+def test_stroke_with_undefined_aperture_is_an_error() -> None:
+    errs = _errors(_HDR + "D11*\nX0Y0D02*\nX1000Y1000D01*\nM02*\n")
+    assert errs == ["Draw operation uses undefined aperture D11"]
+
+
+def test_flash_before_any_aperture_is_selected_is_an_error() -> None:
+    """No D-code at all leaves _current_aperture at 0, which is also undefined."""
+    errs = _errors(_HDR + "X1000Y1000D03*\nM02*\n")
+    assert errs == ["Draw operation before any aperture was selected"]
+
+
+def test_undefined_aperture_error_carries_the_line_of_the_draw_op() -> None:
+    img = parse_gerber(_HDR + "%ADD10C,0.1*%\nD10*\nX0Y0D03*\nD11*\nX1000Y1000D03*\nM02*\n")
+    errs = [d for d in img.diagnostics if d.severity == DiagnosticSeverity.Error]
+    assert len(errs) == 1
+    # Line 7 is the flash, not line 6 where D11 was selected.
+    assert errs[0].line == 7
+
+
+def test_move_with_undefined_aperture_is_not_an_error() -> None:
+    """D02 only repositions the cursor -- it consumes no aperture."""
+    assert _errors(_HDR + "D11*\nX1000Y1000D02*\nM02*\n") == []
+
+
+def test_region_fill_needs_no_aperture() -> None:
+    """G36/G37 contours are filled from their outline, so none is selected."""
+    gerber = _HDR + "G36*\nX0Y0D02*\nX1000Y0D01*\nX1000Y1000D01*\nX0Y0D01*\nG37*\nM02*\n"
+    assert _errors(gerber) == []
+
+
+def test_defined_aperture_draws_without_error() -> None:
+    """Guard against the check firing on every file."""
+    assert _errors(_HDR + "%ADD10C,0.1*%\nD10*\nX1000Y1000D03*\nM02*\n") == []
+
+
+def test_undefined_aperture_is_reported_once_per_code() -> None:
+    """One bad aperture used by many flashes must not emit one error each."""
+    body = "".join(f"X{i * 100}Y0D03*\n" for i in range(200))
+    errs = _errors(_HDR + "D11*\n" + body + "M02*\n")
+    assert errs == ["Draw operation uses undefined aperture D11"]
