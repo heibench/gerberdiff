@@ -7,7 +7,7 @@ XORs pixels for visual overlays; the geometry engine
 changes on the vector geometry and is Cairo-free.
 """
 
-__version__ = "0.29.1"
+__version__ = "0.30.0"
 
 from typing import TYPE_CHECKING, Any
 

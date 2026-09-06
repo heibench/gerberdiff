@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.0] - 2026-09-06
+
 ### Changed
 
 - **BREAKING -- the exit-code contract now matches partspec and netspec**
@@ -715,7 +717,8 @@ merge_tolerance) -> SingleLayerDiff`.
 
 [#17]: https://github.com/heibench/gerberdiff/issues/17
 [A3]: https://heibench.com/adjudications.html
-[Unreleased]: https://github.com/heibench/gerberdiff/compare/v0.29.1...HEAD
+[Unreleased]: https://github.com/heibench/gerberdiff/compare/v0.30.0...HEAD
+[0.30.0]: https://github.com/heibench/gerberdiff/compare/v0.29.1...v0.30.0
 [0.29.1]: https://github.com/heibench/gerberdiff/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/heibench/gerberdiff/compare/9ffd4c8f...v0.29.0
 [0.28.0]: https://github.com/heibench/gerberdiff/compare/b6b6b98d...9ffd4c8f
