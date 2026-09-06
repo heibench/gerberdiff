@@ -2,7 +2,7 @@ site_name: gerberdiff
 site_description: >-
   Diff tool for Gerber/Excellon PCB files: visual raster overlays and
   attributed vector-geometry change analysis.
-site_url: https://heibench.github.io/gerberdiff/
+site_url: https://heibench.com/gerberdiff/
 repo_url: https://github.com/heibench/gerberdiff
 repo_name: heibench/gerberdiff
 edit_uri: edit/main/docs/
