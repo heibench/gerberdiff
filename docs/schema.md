@@ -98,7 +98,7 @@ All coordinate values are in **inches**.
 
 ---
 
-## Schema version 2 (geometry diff)
+## Schema version 3 (geometry diff)
 
 Coordinates (`centroid_x`, `centroid_y`) are in **inches** (matching v1);
 areas are in **mm^2** and displacements in **mm**.
@@ -107,7 +107,7 @@ areas are in **mm^2** and displacements in **mm**.
 
 | Field        | Type                         | Description                                        |
 | ------------ | ---------------------------- | -------------------------------------------------- |
-| `version`    | `integer`                    | Always `2`.                                        |
+| `version`    | `integer`                    | Always `3`.                                        |
 | `generator`  | `string`                     | Always `"gerberdiff"`.                             |
 | `mode`       | `string`                     | Always `"geometry"`.                               |
 | `summary`    | `object`                     | Aggregate counts (see below).                      |
@@ -121,6 +121,13 @@ areas are in **mm^2** and displacements in **mm**.
 | `changed_layers` | `integer` | Layers with any change, non-matched status, or area.  |
 | `total_changes`  | `integer` | Total attributed change records across all layers.    |
 | `has_changes`    | `boolean` | `true` when anything differs.                          |
+| `outcome`        | `string`  | `"identical"` \| `"different"` \| `"indeterminate"`. **Branch on this, not on `has_changes`.** |
+| `unrepresented`  | `object`  | Reason -> count of operations the engine could not model, summed across layers. Empty when the comparison was complete. |
+
+`has_changes` cannot express "could not tell": it is `false` both for two identical
+boards and for a board carrying geometry the engine does not model. `outcome` is
+`"indeterminate"` in the second case, and the CLI exits `2`. `"different"` outranks
+`"indeterminate"`, so a change that *was* found is still reported as one.
 
 ### `tolerances` object
 
@@ -161,10 +168,16 @@ areas are in **mm^2** and displacements in **mm**.
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "generator": "gerberdiff",
   "mode": "geometry",
-  "summary": { "changed_layers": 1, "total_changes": 2, "has_changes": true },
+  "summary": {
+    "changed_layers": 1,
+    "total_changes": 2,
+    "has_changes": true,
+    "outcome": "different",
+    "unrepresented": {}
+  },
   "tolerances": {
     "move_tol_mm": 0.005,
     "gate_radius_mm": 0.2,

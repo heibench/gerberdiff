@@ -11,6 +11,7 @@ Unit conventions (documented in ``docs/schema.md``):
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import TYPE_CHECKING, Literal
 
 from gerberdiff.types import DrawOp, LayerStatus, LayerType, RegionFill
@@ -59,6 +60,17 @@ class LayerGeometryDiff:
     unchanged_count: int = 0
     added_area_mm2: float = 0.0
     removed_area_mm2: float = 0.0
+    unrepresented: dict[str, int] = field(default_factory=dict)
+    """Reasons this layer's geometry is incomplete, merged across both revisions.
+
+    Non-empty means the comparison could not be completed, so ``outcome`` is
+    ``indeterminate`` even when no change was found: what was not modelled cannot be
+    reported as unchanged (A3).
+    """
+
+    @property
+    def indeterminate(self) -> bool:
+        return bool(self.unrepresented)
 
     def count(self, kind: ChangeKind) -> int:
         """Number of changes of the given *kind*."""
@@ -74,6 +86,20 @@ class LayerGeometryDiff:
         )
 
 
+class DiffOutcome(StrEnum):
+    """What the comparison established. Three outcomes, and only one is green.
+
+    A differ needs the third for the same reason a checker does: silence must never
+    read as *no difference*. Before this existed a layer carrying geometry the engine
+    could not model reported ``identical`` at exit 0, with the JSON byte-identical to
+    comparing a board against a copy of itself.
+    """
+
+    Identical = "identical"
+    Different = "different"
+    Indeterminate = "indeterminate"
+
+
 @dataclass
 class GeometryDiffResult:
     """Full geometry diff across all matched layers."""
@@ -83,3 +109,26 @@ class GeometryDiffResult:
     @property
     def has_changes(self) -> bool:
         return any(layer.has_changes for layer in self.layers)
+
+    @property
+    def outcome(self) -> DiffOutcome:
+        """``different`` outranks ``indeterminate``.
+
+        A change that *was* found is a real finding about the fabrication output and
+        stays one even when some other operation could not be modelled. The reverse
+        would let one unmodellable stroke mask a trace that actually moved.
+        """
+        if self.has_changes:
+            return DiffOutcome.Different
+        if any(layer.indeterminate for layer in self.layers):
+            return DiffOutcome.Indeterminate
+        return DiffOutcome.Identical
+
+    @property
+    def unrepresented(self) -> dict[str, int]:
+        """Every reason across every layer, summed."""
+        totals: dict[str, int] = {}
+        for layer in self.layers:
+            for reason, n in layer.unrepresented.items():
+                totals[reason] = totals.get(reason, 0) + n
+        return totals

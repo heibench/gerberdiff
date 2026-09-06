@@ -11,6 +11,20 @@ from gerberdiff import __version__
 from gerberdiff.diff.layer_matcher import EXCELLON_SUFFIXES
 from gerberdiff.types import Diagnostic, DiagnosticSeverity, LayerStatus
 
+# The exit-code contract, aligned with partspec and netspec across the org (A1/A3).
+# 2 is where "could not tell" belongs; a differ needs it as much as a checker does,
+# because what the engine could not model must never be reported as no difference.
+EXIT_OK = 0
+"""No differences, and everything was modelled."""
+EXIT_DIFFERENT = 1
+"""Differences found (with --fail-on-diff)."""
+EXIT_INDETERMINATE = 2
+"""Part of the comparison could not be made. Not a statement about the boards."""
+EXIT_ERROR = 4
+"""Could not read or parse an input. Not a statement about the boards either."""
+EXIT_USAGE = 64
+"""EX_USAGE: bad arguments, or an output file that exists without --overwrite."""
+
 _MEMORY_WARN_PIXELS = 16_777_216  # 4096^2
 
 
@@ -39,7 +53,7 @@ def parse_cmd(file: Path, dump_ir: bool, quiet: bool, verbose: bool) -> None:
         content = file.read_text(errors="replace")
     except OSError as exc:
         click.echo(f"error: {exc}", err=True)
-        sys.exit(1)
+        sys.exit(EXIT_ERROR)
 
     if file.suffix.lower() in EXCELLON_SUFFIXES:
         img = parse_excellon(content, source_path=file)
@@ -89,7 +103,7 @@ def parse_cmd(file: Path, dump_ir: bool, quiet: bool, verbose: bool) -> None:
         }
         click.echo(json.dumps(ir, indent=2))
 
-    sys.exit(2 if has_errors else 0)
+    sys.exit(EXIT_ERROR if has_errors else EXIT_OK)
 
 
 @cli.command("render")
@@ -135,13 +149,13 @@ def render_cmd(
             f"error: output file already exists: {out_png}  (use --overwrite to replace)",
             err=True,
         )
-        sys.exit(1)
+        sys.exit(EXIT_USAGE)
 
     try:
         content = file.read_text(errors="replace")
     except OSError as exc:
         click.echo(f"error: {exc}", err=True)
-        sys.exit(1)
+        sys.exit(EXIT_ERROR)
 
     if file.suffix.lower() in EXCELLON_SUFFIXES:
         img = parse_excellon(content, source_path=file)
@@ -160,7 +174,7 @@ def render_cmd(
             click.echo(f"info: {diag.message}", err=True)
 
     if has_errors:
-        sys.exit(2)
+        sys.exit(EXIT_ERROR)
 
     vp = compute_viewport(img.bounding_box, width, height)
 
@@ -173,7 +187,7 @@ def render_cmd(
         surface.write_to_png(str(out_png))
     except OSError as exc:
         click.echo(f"error: {exc}", err=True)
-        sys.exit(1)
+        sys.exit(EXIT_ERROR)
 
     if not quiet:
         click.echo(f"rendered {width}x{height} -> {out_png}")
@@ -270,7 +284,7 @@ def diff_cmd(
             "error: --align-offset must be two comma-separated floats (e.g. '0.5,0')",
             err=True,
         )
-        sys.exit(2)
+        sys.exit(EXIT_USAGE)
 
     # Memory warning
     total_pixels = width * height
@@ -323,13 +337,13 @@ def diff_cmd(
         )
     except GerberParseError as exc:
         click.echo(f"error: {exc}", err=True)
-        sys.exit(2)
+        sys.exit(EXIT_ERROR)
     except FileExistsError as exc:
         click.echo(f"error: {exc}  (use --overwrite to replace)", err=True)
-        sys.exit(1)
+        sys.exit(EXIT_USAGE)
     except OSError as exc:
         click.echo(f"error: {exc}", err=True)
-        sys.exit(1)
+        sys.exit(EXIT_ERROR)
 
     elapsed_total = time.perf_counter() - t_start
 
@@ -351,7 +365,7 @@ def diff_cmd(
             write_report(diff_result, out_json, overwrite=overwrite)
         except FileExistsError as exc:
             click.echo(f"error: {exc}  (use --overwrite to replace)", err=True)
-            sys.exit(1)
+            sys.exit(EXIT_USAGE)
 
     elapsed_ms = f"({elapsed_total * 1000:.0f} ms)"
     if not quiet:
@@ -364,7 +378,7 @@ def diff_cmd(
         if out_json:
             click.echo(f"report: {out_json}")
 
-    sys.exit(1 if fail_on_diff and diff_result.has_changes else 0)
+    sys.exit(EXIT_DIFFERENT if fail_on_diff and diff_result.has_changes else EXIT_OK)
 
 
 # ---------------------------------------------------------------------------
@@ -445,6 +459,7 @@ def geomdiff_cmd(
     from gerberdiff.export.json_report import write_geometry_report
     from gerberdiff.export.svg_export import write_geometry_svg
     from gerberdiff.geometry import compute_geometry_diff
+    from gerberdiff.geometry.types import DiffOutcome
     from gerberdiff.types import GerberParseError
 
     def _on_diagnostic(path: Path, diag: Diagnostic) -> None:
@@ -468,10 +483,10 @@ def geomdiff_cmd(
         )
     except GerberParseError as exc:
         click.echo(f"error: {exc}", err=True)
-        sys.exit(2)
+        sys.exit(EXIT_ERROR)
     except OSError as exc:
         click.echo(f"error: {exc}", err=True)
-        sys.exit(1)
+        sys.exit(EXIT_ERROR)
     elapsed_total = time.perf_counter() - t_start
 
     if verbose:
@@ -501,7 +516,7 @@ def geomdiff_cmd(
             write_geometry_report(result, out_json, tolerances=tolerances, overwrite=overwrite)
         except FileExistsError as exc:
             click.echo(f"error: {exc}  (use --overwrite to replace)", err=True)
-            sys.exit(1)
+            sys.exit(EXIT_USAGE)
 
     if out_svg_dir is not None:
         try:
@@ -513,19 +528,39 @@ def geomdiff_cmd(
                 )
         except FileExistsError as exc:
             click.echo(f"error: {exc}  (use --overwrite to replace)", err=True)
-            sys.exit(1)
+            sys.exit(EXIT_USAGE)
+
+    # What the engine could not model goes to stderr even under --quiet: it is the
+    # difference between "no changes" and "no changes that I could see", and suppressing
+    # it is the failure this reports on.
+    unrepresented = result.unrepresented
+    if unrepresented:
+        from gerberdiff.geometry.layer_geometry import UNREPRESENTED_REASONS
+
+        click.echo(
+            "warning: this comparison is incomplete; "
+            f"{sum(unrepresented.values())} operation(s) could not be modelled:",
+            err=True,
+        )
+        for reason, count in sorted(unrepresented.items()):
+            click.echo(f"  {count} x {UNREPRESENTED_REASONS[reason]}", err=True)
 
     if not quiet:
         changed_layers = sum(1 for layer_diff in result.layers if layer_diff.has_changes)
         total_changes = sum(len(layer_diff.changes) for layer_diff in result.layers)
         click.echo(
-            f"geomdiff: {changed_layers}/{len(result.layers)} layers changed, "
+            f"geomdiff: {result.outcome}, "
+            f"{changed_layers}/{len(result.layers)} layers changed, "
             f"{total_changes} changes  ({elapsed_total * 1000:.0f} ms)"
         )
         if out_json:
             click.echo(f"report: {out_json}")
 
-    sys.exit(1 if fail_on_diff and result.has_changes else 0)
+    # Indeterminate does not wait for --fail-on-diff. That flag chooses whether a
+    # *difference* is a failure; it has no bearing on whether the tool could look.
+    if result.outcome == DiffOutcome.Indeterminate:
+        sys.exit(EXIT_INDETERMINATE)
+    sys.exit(EXIT_DIFFERENT if fail_on_diff and result.has_changes else EXIT_OK)
 
 
 if __name__ == "__main__":

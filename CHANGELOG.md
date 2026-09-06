@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **BREAKING -- the exit-code contract now matches partspec and netspec**
+  ([A3]). `0` no differences, `1` differences (with `--fail-on-diff`), `2` the
+  comparison could not be completed, `4` an input could not be read or parsed,
+  `64` usage (`EX_USAGE`). Previously `2` meant a parse error and `1` doubled as
+  both "differences found" and "could not write the output file". A gate written
+  `[ $? -eq 0 ]` is unaffected; one that treated `2` as a parse failure must now
+  read `4`.
+- **Geometry report schema `version` 2 -> 3**, adding `summary.outcome`,
+  `summary.unrepresented` and a per-layer `unrepresented`. Additive: every v2
+  field keeps its meaning.
+
+### Added
+
+- **`geomdiff` has a third outcome, and says what it could not model** ([A3]) --
+  `identical` | `different` | `indeterminate`. A stroke drawn with a macro or
+  block aperture is not modelled by the geometry engine, and used to vanish: a
+  board with an added trace reported `0 changes` at exit `0`, with JSON
+  byte-identical to comparing a board against a copy of itself, while the raster
+  engine reported the change. The two engines answered the same question
+  differently and the geometry one gave the dangerous answer. Such operations are
+  now counted in `summary.unrepresented`, named on stderr, and make the outcome
+  `indeterminate` at exit `2` -- which does not wait for `--fail-on-diff`, since
+  that flag chooses whether a *difference* fails, not whether the tool could look.
+  `different` outranks `indeterminate`, so one unmodellable stroke cannot mask a
+  trace that moved.
+
 ### Fixed
 
 - **Draw operations using an undefined aperture are no longer dropped in
@@ -686,6 +714,7 @@ merge_tolerance) -> SingleLayerDiff`.
 - 2 smoke tests in `tests/test_scaffold.py`.
 
 [#17]: https://github.com/heibench/gerberdiff/issues/17
+[A3]: https://heibench.com/adjudications.html
 [Unreleased]: https://github.com/heibench/gerberdiff/compare/v0.29.1...HEAD
 [0.29.1]: https://github.com/heibench/gerberdiff/compare/v0.29.0...v0.29.1
 [0.29.0]: https://github.com/heibench/gerberdiff/compare/9ffd4c8f...v0.29.0

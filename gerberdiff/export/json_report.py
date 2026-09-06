@@ -21,7 +21,7 @@ from gerberdiff.geometry.types import GeometryChange, GeometryDiffResult, LayerG
 from gerberdiff.types import DiffResult, LayerDiffResult, LayerStatus, Region
 
 _SCHEMA_VERSION = 1
-_GEOMETRY_SCHEMA_VERSION = 2
+_GEOMETRY_SCHEMA_VERSION = 3
 _GENERATOR = "gerberdiff"
 
 
@@ -92,6 +92,11 @@ def build_geometry_report(
             "changed_layers": sum(1 for layer in result.layers if layer.has_changes),
             "total_changes": sum(len(layer.changes) for layer in result.layers),
             "has_changes": result.has_changes,
+            # has_changes cannot carry "could not tell": it was False both for two
+            # identical boards and for a board whose geometry the engine could not
+            # model. Branch on outcome, not on has_changes.
+            "outcome": str(result.outcome),
+            "unrepresented": result.unrepresented,
         },
         "layers": [_serialize_geometry_layer(layer) for layer in result.layers],
     }
@@ -140,6 +145,7 @@ def _serialize_geometry_layer(layer: LayerGeometryDiff) -> dict[str, Any]:
             "resized": layer.count("resized"),
         },
         "changes": [_serialize_geometry_change(c) for c in layer.changes],
+        "unrepresented": layer.unrepresented,
     }
 
 
