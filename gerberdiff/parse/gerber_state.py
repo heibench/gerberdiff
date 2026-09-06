@@ -163,6 +163,10 @@ class _GerberParser:
         self._net_attrs: dict[str, str] = {}
         self._aperture_attrs: dict[str, str] = {}
 
+        # Offending D-codes already reported, so one bad aperture used by
+        # thousands of flashes yields one diagnostic rather than thousands.
+        self._undefined_apertures: set[int] = set()
+
         # ---- block aperture stack ----
         # Each frame saves state so that when %AB*% closes the block the
         # parent drawing context is fully restored.
@@ -241,7 +245,28 @@ class _GerberParser:
     # Net emission
     # ------------------------------------------------------------------
 
-    def _emit_net(self) -> None:
+    def _check_aperture_defined(self, line: int) -> None:
+        """Error when the op about to be emitted would draw with no aperture.
+
+        Region contours are filled from their outline and D02 only moves the
+        cursor, so neither consumes an aperture.  Every other op does, and a
+        missing definition means the geometry is dropped -- silently, before
+        this check existed.
+        """
+        if self._in_region_fill or self._aperture_state == ApertureState.Off:
+            return
+        code = self._current_aperture
+        if code in self._apertures or code in self._undefined_apertures:
+            return
+        self._undefined_apertures.add(code)
+        if code == 0:
+            self._error("Draw operation before any aperture was selected", line)
+        else:
+            self._error(f"Draw operation uses undefined aperture D{code}", line)
+
+    def _emit_net(self, line: int) -> None:
+        self._check_aperture_defined(line)
+
         fmt = self._fmt
 
         # Resolve stop position (use prev if coordinate not updated this block)
@@ -736,7 +761,7 @@ class _GerberParser:
 
             elif tt == TokenType.END_OF_BLOCK:
                 if self._coord_changed:
-                    self._emit_net()
+                    self._emit_net(line)
                 self._reset_block()
 
             elif tt == TokenType.EXTENDED:

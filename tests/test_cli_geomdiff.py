@@ -180,3 +180,30 @@ def test_geomdiff_parse_error_exit_2(tmp_path: Path) -> None:
     result = _run("geomdiff", str(before), str(after))
     assert result.exit_code == 2
     assert "error" in result.output.lower()
+
+
+# ---------------------------------------------------------------------------
+# Undefined apertures (issue #17)
+# ---------------------------------------------------------------------------
+
+
+def _write_board_with_undefined_aperture(directory: Path) -> None:
+    """The same pad, plus a second flash on a D-code that is never defined."""
+    directory.mkdir(parents=True, exist_ok=True)
+    src = _HEADER + "%ADD10C,0.1*%\nD10*\nX0Y0D03*\n" + "D11*\nX500000Y500000D03*\n" + _FOOTER
+    (directory / "board-F.Cu.gbr").write_text(src)
+
+
+def test_geomdiff_undefined_aperture_fails_the_gate(tmp_path: Path) -> None:
+    """An added pad on an undefined aperture must not read as "no changes".
+
+    The flash is dropped from the geometry, so before this was reported the
+    comparison came back 0 changes at exit 0 and a real fabrication change
+    passed the gate invisibly.
+    """
+    _write_board(tmp_path / "b", 0)
+    _write_board_with_undefined_aperture(tmp_path / "a")
+    result = _run("geomdiff", str(tmp_path / "b"), str(tmp_path / "a"), "--fail-on-diff")
+    assert result.exit_code == 2, result.output
+    assert "undefined aperture D11" in result.output
+    assert "0 changes" not in result.output

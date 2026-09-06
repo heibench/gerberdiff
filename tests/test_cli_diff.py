@@ -260,3 +260,24 @@ def test_diff_removed_layer_reports_correctly(tmp_path: Path) -> None:
     )
     result = _run("diff", str(before), str(after), "--width", "64", "--height", "64")
     assert result.exit_code == 0, result.output
+
+
+# ---------------------------------------------------------------------------
+# Undefined apertures (issue #17)
+# ---------------------------------------------------------------------------
+
+
+def test_diff_undefined_aperture_fails_the_gate(tmp_path: Path) -> None:
+    """The raster engine drops the flash too -- it must not report 0 changes."""
+    before, after = tmp_path / "b", tmp_path / "a"
+    header = "%FSLAX26Y26*%\n%MOIN*%\n"
+    good = header + "%ADD10C,0.1*%\nD10*\nX0Y0D03*\n" + "M02*\n"
+    before.mkdir()
+    after.mkdir()
+    (before / "board-F.Cu.gbr").write_text(good)
+    (after / "board-F.Cu.gbr").write_text(
+        header + "%ADD10C,0.1*%\nD10*\nX0Y0D03*\nD11*\nX500000Y500000D03*\n" + "M02*\n"
+    )
+    result = _run("diff", str(before), str(after), "--fail-on-diff")
+    assert result.exit_code == 2, result.output
+    assert "undefined aperture D11" in result.output
