@@ -90,8 +90,14 @@ an **`ascii` recipe with no sibling equivalent**: CI greps `gerberdiff/ tests/
 *.md *.toml` for anything outside U+0000-U+007F and fails on a hit, so an em
 dash in this file would turn CI red.
 
-`hooks` is not in `check` because nothing in `ci.yml` runs pre-commit. A green
-`just check` says nothing about the hooks.
+Some of what CI does, the recipes deliberately do not. `hooks` is outside
+`check` because nothing in `ci.yml` runs pre-commit, so a green `check` says
+nothing about the hooks. `setup` is `uv sync --dev` and not `--locked`, because
+that is what CI runs. `--cov-report=xml` is dropped, because CI passes it on one
+leg only to upload an artifact. **The largest omission is the matrix:** CI runs
+the suite on Python 3.11, 3.12 and 3.13 on ubuntu plus 3.11 on windows, and
+`just test` runs whatever interpreter `uv` resolves here. A green local `test`
+is one leg of four, and the Windows leg is the one that skips the raster engine.
 
 ## Outcomes and exit codes
 
@@ -101,10 +107,34 @@ the org contract section 6.2 codes; gerberdiff conforms rather than chooses.
 | Outcome | Exit | Meaning |
 |---|---|---|
 | `identical` | 0 | No differences, and everything was modelled. |
-| `different` | 1 | Differences found. A finding about the fabrication output. |
-| `indeterminate` | 2 | Part of the comparison could not be made. **Not** a statement about the boards. |
+| `different` | 1 **only with `--fail-on-diff`**, otherwise 0 | Differences found. A finding about the fabrication output. |
+| `indeterminate` | 2, regardless of the flag | Part of the comparison could not be made. **Not** a statement about the boards. |
 | -- | 4 | Could not read or parse an input. Not a statement about the boards either. |
 | -- | 64 | Usage: bad arguments, or an output file that exists without `--overwrite`. |
+
+**Read the two qualifiers in that table before writing a gate.** They are the
+whole difference between a gate that works and one that is always green:
+
+```
+$ gerberdiff geomdiff tests/fixtures/gerbers-before tests/fixtures/gerbers-after
+geomdiff: different, 14/15 layers changed, 28928 changes  (20356 ms)
+$ echo $?
+0
+```
+
+Fourteen of fifteen layers changed and the exit code is `0`, because
+`--fail-on-diff` was not passed. So `gerberdiff geomdiff a b; [ $? -eq 1 ]`
+never fires. Pass the flag, or branch on `summary.outcome` in the JSON report.
+`cli.py`'s `EXIT_DIFFERENT` docstring and the 0.30.0 `CHANGELOG.md` entry both
+carry the qualifier; this table is not allowed to be the copy that drops it.
+
+**And `2` is reported only when nothing else was found.** Because `different`
+outranks `indeterminate`, a run that both found a change *and* failed to model
+something reports `different` -- so exit `2` is unreachable whenever a real
+change exists, and a caller treating `2` as its only incomplete signal misses
+the changed-and-incomplete case entirely. `summary.unrepresented` in the JSON,
+and the stderr warning that prints even under `--quiet`, are emitted whenever
+anything went unmodelled, independent of the outcome. Branch on those.
 
 Three things about this are load-bearing and each is enforced by code you can
 read:
@@ -148,9 +178,16 @@ with a finding behind it.
    separately, through `HAS_CAIRO` in `tests/cairo_support.py` --
    `pytest.importorskip` cannot do it, because `cairocffi` raises `OSError`
    rather than `ImportError` when the shared library is missing.
-3. **Every tracked text file is pure ASCII (U+0000-U+007F).** Enforced by
-   `just ascii` and by CI. `CONTRIBUTING.md` carries the replacement table:
-   `--` for an em dash, `->` for an arrow, `>=` for the inequality.
+3. **Text must be pure ASCII (U+0000-U+007F).** `CONTRIBUTING.md` states the
+   rule for all tracked files and carries the replacement table: `--` for an em
+   dash, `->` for an arrow, `>=` for the inequality. **What is enforced is
+   narrower than what is stated.** `just ascii` and the CI step it mirrors take
+   the argv `gerberdiff/ tests/ *.md *.toml`, where the last two are
+   root-level globs -- so `docs/`, everything under `.github/`, `mkdocs.yml`,
+   `.pre-commit-config.yaml` and the `justfile` itself are outside the check.
+   26 of 131 tracked files are text the check never reads. Write ASCII
+   everywhere; do not read a green `just ascii` as coverage of a file it did
+   not open. Widening the argv is tracked on #28.
 4. **Coverage must not fall below 90%.** `just test` and CI both pass
    `--cov-fail-under=90`. `gerberdiff/cli.py` is omitted from the measurement
    (`[tool.coverage.run] omit`) because it is covered through integration
@@ -182,5 +219,6 @@ Siblings, deliberately non-overlapping:
   this repo's outcome vocabulary comes from.
 - `slicelab` and `prusaslicer-py` -- slicer drivers. `orlab` -- OpenRocket.
 
-Design review belongs to `kicad-happy`; authoring belongs to Konnect / SKiDL /
-atopile. Neither is in scope here.
+Outside the org and out of scope here: design review belongs to
+[`aklofas/kicad-happy`](https://github.com/aklofas/kicad-happy), authoring to
+Konnect / SKiDL / atopile.
