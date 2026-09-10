@@ -139,11 +139,14 @@ with a finding behind it.
    unmodellable strokes reported `identical` at exit 0 with JSON
    byte-identical to comparing a board against a copy of itself.
 2. **`import gerberdiff` stays Cairo-free.** The render path imports
-   `cairocffi` lazily, so `geomdiff` and the Python API work on a machine with
-   no system Cairo -- which is why the Windows CI leg can run at all. Verify
-   with `python -c "import sys, gerberdiff; print('cairocffi' in sys.modules)"`;
-   it must print `False`. A top-level render import puts the whole library
-   behind a system library it does not need.
+   `cairocffi` lazily, so the parse and geometry pipelines work on a machine
+   with no system Cairo. Verify with
+   `python -c "import sys, gerberdiff; print('cairocffi' in sys.modules)"`; it
+   must print `False`. A top-level render import puts the whole library behind
+   a system library it does not need. The tests skip the raster engine
+   separately, through `HAS_CAIRO` in `tests/cairo_support.py` --
+   `pytest.importorskip` cannot do it, because `cairocffi` raises `OSError`
+   rather than `ImportError` when the shared library is missing.
 3. **Every tracked text file is pure ASCII (U+0000-U+007F).** Enforced by
    `just ascii` and by CI. `CONTRIBUTING.md` carries the replacement table:
    `--` for an em dash, `->` for an arrow, `>=` for the inequality.
