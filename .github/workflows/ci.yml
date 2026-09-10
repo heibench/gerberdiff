@@ -23,7 +23,7 @@ jobs:
       - run: uv run ruff format --check gerberdiff/ tests/
       - name: Check for non-ASCII characters
         run: |
-          if grep -rP '[^\x00-\x7F]' gerberdiff/ tests/ *.md *.toml; then
+          if grep -rP --exclude-dir=__pycache__ '[^\x00-\x7F]' gerberdiff/ tests/ *.md *.toml; then
             echo "Non-ASCII characters found"
             exit 1
           fi
