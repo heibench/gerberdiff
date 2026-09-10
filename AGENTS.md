@@ -34,9 +34,10 @@ change that made it false is not finished until it is corrected.
 
 ## Start here
 
-**There is no `docs/DECISIONS.md` in this repository.** Every sibling has one;
-this repo's numbered-decision equivalent is `CHANGELOG.md` plus the docstrings
-that carry the reasoning at the point it binds -- `EXIT_*` in
+**There is no `docs/DECISIONS.md` in this repository**, though the org contract
+(section 7) points at one and most siblings have it. This repo's
+numbered-decision equivalent is `CHANGELOG.md` plus the docstrings that carry
+the reasoning at the point it binds -- `EXIT_*` in
 `gerberdiff/cli.py`, `DiffOutcome` and `LayerGeometryDiff.unrepresented` in
 `gerberdiff/geometry/types.py`. Cite a commit when you need to cite a decision.
 If you are about to relitigate something, read the commit that settled it first.
