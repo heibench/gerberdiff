@@ -72,3 +72,7 @@ hooks:
 clean:
     rm -rf dist .pytest_cache .ruff_cache .mypy_cache .coverage coverage.xml
     find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+
+# Audit every package pinned in uv.lock against OSV (uv's experimental `uv audit`).
+audit:
+    uv audit --frozen --preview-features audit-command
