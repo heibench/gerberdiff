@@ -28,7 +28,41 @@ EXIT_USAGE = 64
 _MEMORY_WARN_PIXELS = 16_777_216  # 4096^2
 
 
-@click.group()
+class _Cli(click.Group):
+    """The root group, with click's usage errors exiting EXIT_USAGE.
+
+    click exits 2 on a usage error, and 2 is this tool's `indeterminate` -- a
+    mistyped flag must not read as a comparison that could not be made. partspec
+    does the same remap around argparse. It cannot wrap `main` and remap every
+    SystemExit(2) the way partspec does, because click runs the command inside
+    `main` and `geomdiff` exits 2 on purpose; so it is narrowed to
+    `click.UsageError`, raised while parsing (`make_context`) or resolving the
+    subcommand and parsing its arguments (`invoke`). --help and --version exit 0
+    through `click.exceptions.Exit`, not a UsageError, and pass through untouched.
+    """
+
+    def make_context(
+        self,
+        info_name: str | None,
+        args: list[str],
+        parent: click.Context | None = None,
+        **extra: object,
+    ) -> click.Context:
+        try:
+            return super().make_context(info_name, args, parent, **extra)
+        except click.UsageError as exc:
+            exc.exit_code = EXIT_USAGE
+            raise
+
+    def invoke(self, ctx: click.Context) -> object:
+        try:
+            return super().invoke(ctx)
+        except click.UsageError as exc:
+            exc.exit_code = EXIT_USAGE
+            raise
+
+
+@click.group(cls=_Cli)
 @click.version_option(__version__, prog_name="gerberdiff")
 def cli() -> None:
     """Diff tool for Gerber/Excellon PCB design files.

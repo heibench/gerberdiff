@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A usage error exits `64`, as the exit-code table has said since 0.30.0**
+  ([#30]). click exits `2` on an unknown flag, an unknown verb, a missing
+  argument or one that fails its type check, so a mistyped flag exited with
+  `indeterminate`'s code. click's usage errors are now remapped to `64`.
+  `--help` and `--version` still exit `0`, and a command's own exit codes --
+  `geomdiff`'s `2` included -- are unchanged.
+
+[#30]: https://github.com/heibench/gerberdiff/issues/30
+
 ## [0.30.0] - 2026-09-06
 
 ### Changed
