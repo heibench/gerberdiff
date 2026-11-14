@@ -9,18 +9,20 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  logo: https://heibench.com/assets/favicon.svg
+  favicon: https://heibench.com/assets/favicon.svg
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: teal
-      accent: deep orange
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: teal
-      accent: deep orange
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -85,3 +87,21 @@ plugins:
 
 watch:
   - gerberdiff
+
+extra_css:
+  - https://heibench.com/assets/docs.css
+
+extra:
+  homepage: https://heibench.com/
+  social:
+    - icon: fontawesome/solid/house
+      link: https://heibench.com/
+      name: heibench
+    - icon: fontawesome/brands/github
+      link: https://github.com/heibench/gerberdiff
+      name: gerberdiff on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/gerberdiff/
+      name: gerberdiff on PyPI
+
+copyright: Part of <a href="https://heibench.com/">heibench</a>. Apache-2.0.
