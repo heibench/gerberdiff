@@ -51,13 +51,13 @@ jobs:
       - run: uv sync --group docs
       - run: uv run mkdocs build --strict
       - uses: actions/upload-pages-artifact@v5
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         with:
           path: site/
 
   deploy:
     name: Deploy to GitHub Pages
-    if: github.event_name == 'push'
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     permissions:
